@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const phantom = require('phantom');
 const ARCHIVE_URL = "http://www.archive.is"
 
