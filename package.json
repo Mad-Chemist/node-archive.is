@@ -1,0 +1,12 @@
+{
+  "name": "web-archive",
+  "version": "1.0.0",
+  "description": "An utility that uses archive.is / archive.today to archive a webpage from a given url.",
+  "main": "index.js",
+  "license": "GPL-3.0",
+  "author": "https://github.com/Mad-Chemist",
+  "license": "ISC",
+  "devDependencies": {
+    "phantom": "^4.0.12"
+  }
+}
