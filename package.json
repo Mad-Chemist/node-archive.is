@@ -1,6 +1,6 @@
 {
   "name": "web-archive",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An utility that uses archive.is / archive.today to archive a webpage from a given url.",
   "main": "index.js",
   "license": "ISC",
