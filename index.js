@@ -1,10 +1,12 @@
 const phantom = require('phantom');
-const ARCHIVE_URL = "http://www.archive.is"
+const ARCHIVE_URL = "http://archive.vn"
+const TIMEOUT = 15 * 1000;
 
 function testUrl(url) {
+	// archive\.\w+\/
 	// Verifies that the URL is likely the archive link and not submit link
-	let domainCheck = new RegExp(/archive\.is\/.{5}/, "g");
-	let archiveUrl = new RegExp(/archive\.is\/submit|archive\.is\/\?run/, "g");
+	let domainCheck = new RegExp(/archive\.\w+\/.{5}/, "g");
+	let archiveUrl = new RegExp(/archive\.\w+\/submit|archive\.\w+\/\?run/, "g");
 
 	return !archiveUrl.test(url) && domainCheck.test(url);
 }
@@ -31,7 +33,7 @@ function loadPage(url) {
 					    			timeout = setTimeout(()=> {
 					    				reject(`Attempting to get the archive link has timed out.`);
 					    				page.close().then(()=> ph.exit());
-					    			}, 5000);
+					    			}, TIMEOUT);
 					    		}
 					    	})
 
@@ -53,10 +55,8 @@ let api = {
 			}
 
 			loadPage(`${ARCHIVE_URL}/?run=1&url=${encodeURIComponent(url)}`)
-				.catch(reject)
-				.then(responseUrl=> {
-					resolve(responseUrl);
-				})
+				.then(responseUrl => resolve(responseUrl))
+				.catch(reject);
 		})
 	}
 };
