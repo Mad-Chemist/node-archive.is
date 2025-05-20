@@ -15,9 +15,9 @@ async function save(req_url, options={}) {
 
 	const browser = await puppeteer.launch({ headless: true });
 	const page = await browser.newPage();
+	await page.setUserAgent(userAgent); // Set a realistic User-Agent
 
-	// Set a realistic User-Agent
-	await page.setUserAgent(userAgent);
+	let error;
 	let req = await new Promise(async (resolve, reject) => {
 		let timed_out = setTimeout(() => reject('Request Timed Out'), timeout)
 		try {
@@ -45,9 +45,15 @@ async function save(req_url, options={}) {
 			clearTimeout(timed_out);
 			reject(error);
 		}
-	})
+	}).catch(e => (error=e));
 
 	await browser.close();
+
+	// Throw if unable to archive
+	if (error) {
+		throw new Error(error)
+	}
+
 	return req;
 }
 

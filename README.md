@@ -9,7 +9,7 @@ try {
     let url = await save('https://www.npmjs.com/package/web-archive')
     console.log(`Archived URL: ${url}`);
 }
-catch (error) {
-    console.warn(`Unable to save URL: ${error}`);
+catch(error) {
+    log(`Result page archive failed ${error}`);
 }
 ````
