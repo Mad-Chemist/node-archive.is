@@ -8,6 +8,7 @@ const DEFAULT_TIMEOUT = 60 * 1000; // One Minute default timeout
 
 async function save(req_url, options={}) {
 	const {
+		forceRefresh = false,
 		userAgent = new UserAgent().toString(),
 		archiveSite = ARCHIVE_URL,
 		timeout = DEFAULT_TIMEOUT
@@ -24,22 +25,31 @@ async function save(req_url, options={}) {
 			await page.setRequestInterception(true);
 			page.on('request', request => {
 				request.continue();
-				if (/\/wip\/(.+)/.test(request.url())) {
+				if (/\/wip\/(.+)/.test(request.url())) { // If WIP, URL is archiving
 					clearTimeout(timed_out);
 					resolve(request.url().replace('/wip', ''));
+				}
+				else if (/\/\/.+\.[^\/]+\/(.{5})\/?$/.test(request.url())) { // Test if URL already archived
+					clearTimeout(timed_out);
+					resolve(request.url());
 				}
 			});
 
 			await page.goto(archiveSite, { waitUntil: 'networkidle2' });
+
+			if (forceRefresh) {
+				await page.evaluate(() => {
+					const input = document.createElement('input');
+					input.type = "hidden";
+					input.id = input.name = 'anyway';
+					input.value = '1';
+					document.querySelector('form#submiturl').prepend(input);
+				});
+			}
+
 			await page.type('input#url', req_url);
 			await page.click('form#submiturl input[type="submit"]');
-
-			// Wait for page load then see if the archive needs to be re-archived
 			await page.waitForNavigation({ waitUntil: 'networkidle2' });
-			let needs_resave = await page.evaluate(() => !!document.querySelector('input[name="anyway"]'));
-			if (needs_resave) {
-				await page.click('form[action*="submit"] input[type="submit"]');
-			}
 		}
 		catch (error) {
 			clearTimeout(timed_out);
