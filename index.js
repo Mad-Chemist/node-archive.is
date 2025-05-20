@@ -1,64 +1,54 @@
-const phantom = require('phantom');
+const UserAgent = require('user-agents');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
+
 const ARCHIVE_URL = "http://archive.vn"
-const TIMEOUT = 15 * 1000;
+const DEFAULT_TIMEOUT = 60 * 1000; // One Minute default timeout
 
-function testUrl(url) {
-	// archive\.\w+\/
-	// Verifies that the URL is likely the archive link and not submit link
-	let domainCheck = new RegExp(/archive\.\w+\/.{5}/, "g");
-	let archiveUrl = new RegExp(/archive\.\w+\/submit|archive\.\w+\/\?run/, "g");
+async function save(req_url, options={}) {
+	const {
+		userAgent = new UserAgent().toString(),
+		archiveSite = ARCHIVE_URL,
+		timeout = DEFAULT_TIMEOUT
+	} = options;
 
-	return !archiveUrl.test(url) && domainCheck.test(url);
-}
+	const browser = await puppeteer.launch({ headless: true });
+	const page = await browser.newPage();
 
-function loadPage(url) {
-	return new Promise((resolve, reject) => {
+	// Set a realistic User-Agent
+	await page.setUserAgent(userAgent);
+	let req = await new Promise(async (resolve, reject) => {
+		let timed_out = setTimeout(() => reject('Request Timed Out'), timeout)
 		try {
-			phantom.create()
-				.catch(reject)
-				.then(function(ph) {
+			await page.setRequestInterception(true);
+			page.on('request', request => {
+				request.continue();
+				if (/\/wip\/(.+)/.test(request.url())) {
+					clearTimeout(timed_out);
+					resolve(request.url().replace('/wip', ''));
+				}
+			});
 
-				    ph.createPage()
-					    .catch(reject)
-					    .then(function(page) {
+			await page.goto(archiveSite, { waitUntil: 'networkidle2' });
+			await page.type('input#url', req_url);
+			await page.click('form#submiturl input[type="submit"]');
 
-					    	let timeout = false;
-					    	page.on("onNavigationRequested", (url, type, willNavigate, main) => {
-					    		clearTimeout(timeout);
-					    		if (testUrl(url) === true) {
-									resolve(url);
-									page.close().then(()=> ph.exit());
-					    		}
-					    		else {
-					    			timeout = setTimeout(()=> {
-					    				reject(`Attempting to get the archive link has timed out.`);
-					    				page.close().then(()=> ph.exit());
-					    			}, TIMEOUT);
-					    		}
-					    	})
-
-					        page.open(url);
-					    });
-				});
+			// Wait for page load then see if the archive needs to be re-archived
+			await page.waitForNavigation({ waitUntil: 'networkidle2' });
+			let needs_resave = await page.evaluate(() => !!document.querySelector('input[name="anyway"]'));
+			if (needs_resave) {
+				await page.click('form[action*="submit"] input[type="submit"]');
+			}
 		}
-		catch(error) {
+		catch (error) {
+			clearTimeout(timed_out);
 			reject(error);
 		}
-	});
+	})
+
+	await browser.close();
+	return req;
 }
 
-let api = {
-	save: function(url) {
-		return new Promise((resolve, reject) => {
-			if (typeof url !== "string") {
-				return reject(`The URL provided is not a string as required, but rather ${typeof url}`);
-			}
-
-			loadPage(`${ARCHIVE_URL}/?run=1&url=${encodeURIComponent(url)}`)
-				.then(responseUrl => resolve(responseUrl))
-				.catch(reject);
-		})
-	}
-};
-
-module.exports = api;
+module.exports = {save};

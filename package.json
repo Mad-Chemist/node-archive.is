@@ -1,22 +1,33 @@
 {
   "name": "web-archive",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "An utility that uses archive.is / archive.today to archive a webpage from a given url.",
   "main": "index.js",
   "license": "ISC",
   "author": "https://github.com/Mad-Chemist",
   "dependencies": {
-    "phantom": "^4.0.12"
+    "puppeteer": "^24.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "user-agents": "^1.1.545"
   },
   "keywords": [
-  	"archive.is",
-  	"wayback",
-  	"web-archiving",
-  	"archive",
-  	"archival",
-  	"promise",
-  	"archiver",
-  	"web archiver",
-  	"archive website"
+    "archive.is",
+    "wayback",
+    "web-archiving",
+    "archive",
+    "archival",
+    "promise",
+    "archiver",
+    "web archiver",
+    "archive website",
+    "snapshot",
+    "archiveis",
+    "archive.today",
+    "archive.vn",
+    "archive.md",
+    "wayback",
+    "archiving",
+    "preservation"
   ]
 }
